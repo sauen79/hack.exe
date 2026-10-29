@@ -302,9 +302,17 @@ async function loadFromFirebase(){
 }
 
 async function saveToFirebase(){
-  await window.firebaseReady;
-  const docRef=window.firebaseDoc(window.firebaseDB, FIREBASE_COLLECTION, FIREBASE_DOC);
-  await window.firebaseSetDoc(docRef, S);
+  try{
+    await window.firebaseReady;
+    if(!window.firebaseDB) return;
+    const docRef=window.firebaseDoc(window.firebaseDB, FIREBASE_COLLECTION, FIREBASE_DOC);
+    await Promise.race([
+      window.firebaseSetDoc(docRef, S),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')), 3500))
+    ]);
+  }catch(e){
+    console.warn('Sync Firebase en segundo plano:', e);
+  }
 }
 
 async function initializeData(){
@@ -332,13 +340,9 @@ async function initializeData(){
 
 async function save(){
   try{
-    localStorage.setItem('TS_DATA',JSON.stringify(S));
-    await saveToFirebase();
-  }catch(e){
-    console.warn('Error guardando en Firebase (guardado en local):',e);
-    toast('Guardado localmente');
-    return true;
-  }
+    localStorage.setItem('TS_DATA', JSON.stringify(S));
+  }catch(e){}
+  saveToFirebase();
   return true;
 }
 
@@ -678,9 +682,10 @@ document.getElementById('adminBtn').onclick=()=>{view='admin';render();};
 function openAuthDialog(type){
   const isLogin=type==='login';
   dlg.innerHTML='<h3>'+(isLogin?'Iniciar sesión':'Registrarse')+'</h3>'+
-  '<form class="stack" id="authForm"><label>Nombre<input name="name" required maxlength="40" placeholder="Tu nombre"></label>'+
+  '<form class="stack" id="authForm">'+
+  (!isLogin?'<label>Nombre<input name="name" required maxlength="40" placeholder="Tu nombre"></label>':'')+
   '<label>Email<input name="email" type="email" required maxlength="80" placeholder="tu@email.com"></label>'+
-  '<label>Contraseña<input name="password" type="password" required minlength="6" maxlength="40" placeholder="Minimo 6 caracteres"></label>'+
+  '<label>Contraseña<input name="password" type="password" required minlength="6" maxlength="40" placeholder="Mínimo 6 caracteres"></label>'+
   (!isLogin?'<label>Tipo de cuenta<select name="role"><option value="client">Cliente</option><option value="owner">Dueño de negocio</option></select></label>':'')+
   '<div class="actions"><button class="btn" type="submit">'+(isLogin?'Iniciar sesión':'Registrarse')+'</button><button class="btn ghost" type="button" data-close>Cancelar</button></div></form>';
   if(!dlg.open)dlg.showModal();
@@ -690,6 +695,7 @@ function openAuthDialog(type){
     const f=new FormData(e.target);
     const email=f.get('email').trim().toLowerCase();
     const password=f.get('password');
+    if(!S.users)S.users={};
     if(isLogin){
       const user=S.users[email];
       if(user&&user.password===password){
@@ -706,12 +712,14 @@ function openAuthDialog(type){
         toast('Este email ya está registrado');
         return;
       }
-      S.users[email]={name:f.get('name').trim(),email,password,role:f.get('role')};
-      S.currentUser={email,name:S.users[email].name,role:S.users[email].role};
+      const name=(f.get('name')||'').trim()||'Usuario';
+      const role=f.get('role')||'client';
+      S.users[email]={name,email,password,role};
+      S.currentUser={email,name,role};
       await save();
       dlg.close();
       render();
-      toast('Registro exitoso');
+      toast('¡Registro exitoso! Bienvenido, '+name);
     }
   };
 }
