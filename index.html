@@ -1,0 +1,837 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TurnoSimple: menos citas perdidas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+window.firebaseReady=(async()=>{
+  const [{initializeApp},{getFirestore,collection,doc,getDoc,setDoc,updateDoc,deleteDoc,onSnapshot}]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js')
+  ]);
+  const firebaseConfig={
+    apiKey:"AIzaSyD-Qe70XbeuMGIExwSCtkeJFBEAKvfgJmI",
+    authDomain:"usuarios05.firebaseapp.com",
+    projectId:"usuarios05",
+    storageBucket:"usuarios05.firebasestorage.app",
+    messagingSenderId:"426328929269",
+    appId:"1:426328929269:web:60672069d25778768ea6bc"
+  };
+  window.firebaseDB=getFirestore(initializeApp(firebaseConfig));
+  window.firebaseCollection=collection;
+  window.firebaseDoc=doc;
+  window.firebaseGetDoc=getDoc;
+  window.firebaseSetDoc=setDoc;
+  window.firebaseUpdateDoc=updateDoc;
+  window.firebaseDeleteDoc=deleteDoc;
+  window.firebaseOnSnapshot=onSnapshot;
+})();
+</script>
+<style>
+:root{--bg:#F5F8FA;--panel:#FFFFFF;--ink:#1A365D;--muted:#4A5568;--line:#E2E8F0;--book:#2B6CB0;--booktxt:#FFFFFF;--sig:#FFC93C;--sigtxt:#2B2100;--bad:#B3412F;--primary:#3182CE;--primary-light:#EBF8FF;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1A202C;--panel:#2D3748;--ink:#E2E8F0;--muted:#A0AEC0;--line:#4A5568;--book:#4299E1;--booktxt:#FFFFFF;--bad:#FC8181;--primary:#63B3ED;--primary-light:#2C5282;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1A202C;--panel:#2D3748;--ink:#E2E8F0;--muted:#A0AEC0;--line:#4A5568;--book:#4299E1;--booktxt:#FFFFFF;--bad:#FC8181;--primary:#63B3ED;--primary-light:#2C5282;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Figtree,system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque',Figtree,system-ui,sans-serif;margin:0;line-height:1.15}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sig);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between;margin-bottom:20px}
+header h1{font-size:clamp(1.9rem,5vw,2.8rem);font-weight:700;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--muted)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+.stat b{display:block;font:700 1.6rem 'Bricolage Grotesque',Figtree,sans-serif;line-height:1.1}
+.stat span{font-size:.85rem;color:var(--muted)}
+.stat.hot b{background:var(--sig);color:var(--sigtxt);display:inline-block;padding:0 8px;border-radius:6px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.stats{width:100%}.stat{flex:1}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.week{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+.day{flex:1 0 64px;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 6px;text-align:center;cursor:pointer;position:relative}
+.day small{display:block;color:var(--muted);text-transform:capitalize}
+.day b{font:700 1.3rem 'Bricolage Grotesque',Figtree,sans-serif}
+.day[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.day[aria-pressed="true"] small{color:inherit;opacity:.8}
+.day i{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--sig)}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.dayhead h2{font-size:1.3rem;text-transform:capitalize}
+.dayhead span{color:var(--muted);font-size:.9rem}
+.slots{display:grid;gap:6px}
+.slot{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:stretch}
+.slot time{font-variant-numeric:tabular-nums;color:var(--muted);padding-top:10px;font-weight:500}
+.cell{width:100%;text-align:left;border-radius:10px;padding:9px 12px;min-height:46px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center;border:1px dashed var(--line);background:transparent;color:var(--muted)}
+.cell:hover{border-color:var(--ink);color:var(--ink)}
+.cell.book{background:var(--book);color:var(--booktxt);border:1px solid var(--book)}
+.cell.book small{opacity:.8}
+.cell.lib{background:var(--sig);color:var(--sigtxt);border:1px solid var(--sig);font-weight:600}
+.cell.lib small{font-weight:500}
+.cell.past{opacity:.45;cursor:default}
+.tag{font-size:.8rem;background:rgba(0,0,0,.14);border-radius:99px;padding:1px 9px;white-space:nowrap}
+aside{display:grid;gap:20px}
+aside h3{font-size:1.1rem;margin-bottom:10px}
+form.stack{display:grid;gap:8px}
+label{display:grid;gap:3px;font-size:.88rem;color:var(--muted)}
+input,select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;color:var(--ink)}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.warn{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:4px 10px;font-size:.88rem}
+.btn:disabled{opacity:.5;cursor:default}
+.list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+.list li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:4px}
+.list .row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.muted{color:var(--muted);font-size:.88rem}
+.empty{color:var(--muted);font-size:.92rem;margin:8px 0 0}
+.msg{background:var(--bg);border-left:3px solid var(--sig);padding:6px 10px;border-radius:0 8px 8px 0;font-size:.88rem}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:20px;width:min(480px,calc(100% - 24px));max-height:90vh;overflow:auto}
+dialog::backdrop{background:rgba(5,15,14,.55)}
+dialog h3{font-size:1.3rem;margin-bottom:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sep{height:1px;background:var(--line);margin:14px 0}
+details summary{cursor:pointer;font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:20;max-width:90%}
+.foot{margin-top:24px;color:var(--muted);font-size:.85rem}
+:root{--ok:#3182CE;--oktxt:#fff}@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--ok:#63B3ED;--oktxt:#06210F}}:root[data-theme="dark"]{--ok:#63B3ED;--oktxt:#06210F}
+.cell.free{border:1px solid var(--line);border-left:5px solid var(--primary);background:color-mix(in srgb,var(--primary-light) 40%,transparent);color:var(--ink)}
+.cell.pend{background:repeating-linear-gradient(135deg,var(--book) 0 10px,color-mix(in srgb,var(--book) 80%,#fff) 10px 20px);color:var(--booktxt);border:1px solid var(--book)}
+.cell.closed{background:var(--bg);color:var(--muted);border:1px dashed var(--line);cursor:not-allowed;opacity:0.6}
+.tag.ok{background:var(--ok);color:var(--oktxt)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:0 0 12px;font-size:.88rem;color:var(--muted)}
+.legend>span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+.sw.free{border-left:5px solid var(--primary)}.sw.book{background:var(--book)}.sw.lib{background:var(--sig)}.sw.pend{background:repeating-linear-gradient(135deg,var(--book) 0 4px,transparent 4px 8px)}
+.filter{display:flex;gap:6px;margin-left:auto}
+.filter button{border:1px solid var(--line);background:transparent;border-radius:99px;padding:3px 12px;cursor:pointer}
+.filter button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.gw{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0}
+.gw b{font:700 1.5rem 'Bricolage Grotesque',Figtree,sans-serif}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qr{width:140px;height:140px;margin:6px auto;border-radius:8px;background:conic-gradient(var(--ink) 25%,transparent 0 50%,var(--ink) 0 75%,transparent 0) 0 0/28px 28px,var(--bg);border:6px solid var(--bg);outline:1px solid var(--line)}
+.err{color:var(--bad);margin:0;min-height:1.2em;font-size:.9rem}
+.chk{display:flex;gap:8px;align-items:center;color:var(--ink);font-size:.95rem}.chk input{width:auto}
+.payopt{display:grid;gap:6px}
+@media(prefers-reduced-motion:no-preference){.cell.lib{animation:pulse 1.6s ease-out 1}@keyframes pulse{from{box-shadow:0 0 0 0 var(--sig)}to{box-shadow:0 0 0 10px transparent}}}
+.search-section{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px}
+.locales-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+.locale-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:0;display:grid;gap:0;overflow:hidden;transition:transform 0.2s,box-shadow 0.2s}
+.locale-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
+.locale-header{display:flex;gap:16px;align-items:center;padding:20px;background:linear-gradient(135deg,var(--primary-light) 0%,var(--panel) 100%)}
+.locale-logo{width:64px;height:64px;border-radius:12px;object-fit:cover;border:2px solid var(--line);background:var(--bg)}
+.locale-info{flex:1}
+.locale-card h3{margin:0;font-size:1.2rem;font-weight:700;color:var(--ink)}
+.locale-type{font-size:0.85rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.locale-body{padding:20px;display:grid;gap:16px}
+.locale-address{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:0.9rem}
+.locale-stats{display:flex;gap:12px;flex-wrap:wrap}
+.stat-sm{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 14px;min-width:90px;text-align:center;flex:1}
+.stat-sm b{display:block;font-weight:700;font-size:1.3rem;color:var(--primary)}
+.stat-sm small{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.locale-rating{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:0.9rem}
+.locale-rating .stars{color:#F59E0B}
+.locale-footer{padding:16px 20px;background:var(--bg);border-top:1px solid var(--line)}
+.locale-card .btn{width:100%;padding:12px;font-weight:600}
+.auth-section{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.auth-section .btn{margin-right:8px}
+#authButtons{display:flex;gap:8px}
+#userInfo{display:flex;align-items:center;gap:12px}
+#userName{font-weight:600;color:var(--ink)}
+.firebase-status{display:flex;align-items:center;gap:8px}
+#firebaseStatus{font-size:0.85rem;padding:4px 8px;background:var(--bg);border-radius:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>TurnoSimple</h1>
+    <p>Menos citas perdidas. Cuando se cae un turno, avisás a quien lo está esperando.</p>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div id="homeView">
+  <section class="panel">
+    <div class="auth-section" id="authSection">
+      <div id="authButtons">
+        <button class="btn" id="loginBtn">Iniciar sesión</button>
+        <button class="btn ghost" id="registerBtn">Registrarse</button>
+      </div>
+      <div id="userInfo" style="display:none">
+        <span id="userName"></span>
+        <button class="btn ghost sm" id="logoutBtn">Cerrar sesión</button>
+        <button class="btn ghost sm" id="adminBtn" style="display:none">Panel de dueño</button>
+      </div>
+      <div class="firebase-status"><span id="firebaseStatus" class="muted">Firebase</span></div>
+    </div>
+    <div class="search-section">
+      <input type="text" id="searchInput" placeholder="Buscar locales por nombre, dirección o tipo..." class="search-input">
+      <button class="btn" id="geoBtn">Usar mi ubicación</button>
+    </div>
+    <div id="localesContainer" class="locales-grid"></div>
+  </section>
+</div>
+
+<div id="bookingView" style="display:none">
+  <button class="btn ghost" id="backHome">← Volver a locales</button>
+  <div class="grid">
+    <main>
+      <div class="week" id="week" role="group" aria-label="Elegí un día"></div>
+      <section class="panel">
+        <div class="dayhead"><h2 id="dayTitle"></h2><span id="daySum"></span></div>
+        <div class="legend"><span><i class="sw free"></i>Disponible</span><span><i class="sw lib"></i>Disponible (se liberó)</span><span><i class="sw book"></i>Ocupado</span><span><i class="sw pend"></i>Ocupado, falta pagar</span><div class="filter"><button type="button" id="fAll">Todos</button><button type="button" id="fFree">Solo disponibles</button></div></div>
+        <div class="slots" id="slots"></div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="panel">
+        <h3>Lista de espera</h3>
+        <form class="stack" id="wForm">
+          <label>Nombre<input name="client" required maxlength="40" placeholder="Nombre del cliente"></label>
+          <label>Teléfono<input name="phone" required maxlength="20" inputmode="tel" placeholder="0981 123 456"></label>
+          <label>Día<select name="date" id="wDate"></select></label>
+          <label>Horario<select name="win"><option value="any">Cualquier hora</option><option value="am">Mañana (antes de las 13:00)</option><option value="pm">Tarde (desde las 13:00)</option></select></label>
+          <button class="btn" type="submit">Anotar en la lista</button>
+        </form>
+        <ul class="list" id="wList"></ul>
+      </section>
+      <section class="panel">
+        <h3>Avisos enviados</h3>
+        <p class="muted">Simulados: no se envía ningún mensaje real.</p>
+        <ul class="list" id="logList"></ul>
+      </section>
+      <section class="panel"><h3>Cobro de seña</h3><p class="muted">Pasarela de pago simulada: no se cobra dinero real.</p><div class="stack"><label class="chk"><input type="checkbox" id="cfgPay"> Pedir seña para confirmar la reserva</label><label>Monto de la seña (Gs.)<input type="number" id="cfgAmt" min="1000" step="1000"></label></div></section>
+      <button class="btn ghost" id="reset" type="button">Reiniciar datos de prueba</button>
+    </aside>
+  </div>
+</div>
+
+<div id="adminView" style="display:none">
+  <button class="btn ghost" id="backHomeFromAdmin">← Volver a inicio</button>
+  <div class="grid">
+    <main>
+      <section class="panel">
+        <h2>Panel de Administración</h2>
+        <p class="muted">Gestiona tus locales y configuraciones</p>
+        <div class="sep"></div>
+        <h3>Mis Locales</h3>
+        <div id="adminLocales" class="locales-grid"></div>
+        <div class="sep"></div>
+        <button class="btn" id="addLocaleBtn">Agregar nuevo local</button>
+      </section>
+    </main>
+    <aside>
+      <section class="panel">
+        <h3>Configuración General</h3>
+        <div class="stack">
+          <label class="chk"><input type="checkbox" id="cfgPay"> Pedir seña para confirmar la reserva</label>
+          <label>Monto de la seña (Gs.)<input type="number" id="cfgAmt" min="1000" step="1000"></label>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+<p class="foot">Plan mensual para profesionales independientes. Los datos se guardan en Firebase.</p>
+</div>
+
+<dialog id="dlg"></dialog>
+
+<script>
+(function(){
+const HOURS=[];for(let h=8;h<20;h++){HOURS.push(pad(h)+':00');HOURS.push(pad(h)+':30')}
+function pad(n){return String(n).padStart(2,'0')}
+function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+const today=new Date();today.setHours(0,0,0,0);
+const DAYS=[...Array(7)].map((_,i)=>addDays(today,i));
+const fmtLong=d=>new Date(d+'T12:00:00').toLocaleDateString('es-PY',{weekday:'long',day:'numeric',month:'long'});
+const fmtShort=d=>new Date(d+'T12:00:00').toLocaleDateString('es-PY',{weekday:'short',day:'numeric'});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtN=n=>new Intl.NumberFormat('es-PY').format(n);const fmtGs=n=>fmtN(n)+' Gs.';
+const FIREBASE_COLLECTION='turnosimple';
+const FIREBASE_DOC='config';
+let uid=1;const nid=()=>'id'+(Date.now().toString(36))+(uid++);
+
+function seed(){
+  const d0=iso(DAYS[0]),d1=iso(DAYS[1]);
+  const a=(date,time,client,service,phone,status)=>({id:nid(),date,time,client,service,phone,status:status||'confirmado'});
+  const locales=[
+    {id:'loc1',name:'Barbería El Caballero',address:'Av. Brasil 1234, Asunción',lat:-25.284,lng:-57.642,rating:4.8,type:'Barbería',hours:{lunes:'09:00-18:00',martes:'09:00-18:00',miercoles:'09:00-18:00',jueves:'09:00-18:00',viernes:'09:00-18:00',sabado:'09:00-14:00',domingo:'cerrado'},logo:'https://via.placeholder.com/80x80/2B6CB0/FFFFFF?text=BC',owner:'owner1'},
+    {id:'loc2',name:'Salón Belleza Total',address:'Estrella 456, Asunción',lat:-25.276,lng:-57.635,rating:4.5,type:'Salón de belleza',hours:{lunes:'10:00-19:00',martes:'10:00-19:00',miercoles:'10:00-19:00',jueves:'10:00-19:00',viernes:'10:00-19:00',sabado:'10:00-16:00',domingo:'cerrado'},logo:'https://via.placeholder.com/80x80/9F7AEA/FFFFFF?text=BT',owner:'owner2'},
+    {id:'loc3',name:'Estilo Moderno',address:'Mariscal López 789, Asunción',lat:-25.292,lng:-57.658,rating:4.9,type:'Peluquería',hours:{lunes:'09:00-20:00',martes:'09:00-20:00',miercoles:'09:00-20:00',jueves:'09:00-20:00',viernes:'09:00-20:00',sabado:'09:00-18:00',domingo:'10:00-16:00'},logo:'https://via.placeholder.com/80x80/48BB78/FFFFFF?text=EM',owner:'owner3'},
+    {id:'loc4',name:'Corte Express',address:'Jejuí 321, San Lorenzo',lat:-25.340,lng:-57.510,rating:4.3,type:'Barbería',hours:{lunes:'08:00-18:00',martes:'08:00-18:00',miercoles:'08:00-18:00',jueves:'08:00-18:00',viernes:'08:00-18:00',sabado:'08:00-14:00',domingo:'cerrado'},logo:'https://via.placeholder.com/80x80/ED8936/FFFFFF?text=CE',owner:'owner4'},
+    {id:'loc5',name:'Glamour Hair',address:'Padre Cardozo 567, Luque',lat:-25.087,lng:-57.498,rating:4.7,type:'Salón de belleza',hours:{lunes:'09:00-19:00',martes:'09:00-19:00',miercoles:'09:00-19:00',jueves:'09:00-19:00',viernes:'09:00-19:00',sabado:'09:00-17:00',domingo:'cerrado'},logo:'https://via.placeholder.com/80x80/EC4899/FFFFFF?text=GH',owner:'owner5'}
+  ];
+  return{
+    locales:locales,
+    selectedLocale:locales[0].id,
+    users:{},
+    currentUser:null,
+    appts:{loc1:[a(d0,'09:00','Marcos Benítez','Corte y barba','0981 555 210'),a(d0,'10:00','Lucía Giménez','Corte','0982 410 330'),
+      a(d0,'11:30','Rodrigo Ayala','Corte','0971 220 098','cancelado'),a(d0,'14:00','Fabiola Servín','Color','0985 770 124'),a(d0,'12:00','Sofía Vera','Corte','0986 300 411','pendiente'),Object.assign(a(d0,'15:30','Pablo Núñez','Barba','0992 284 506'),{paid:20000,method:'Tarjeta',ref:'TS-4F2A9K'}),
+      a(d1,'09:30','Hugo Cabral','Barba','0991 308 442'),a(d1,'15:00','Natalia Duarte','Corte','0983 665 017')],
+      loc2:[a(d0,'10:00','María González','Corte','0981 234 567'),a(d0,'14:30','Ana Rodríguez','Tinte','0982 345 678','cancelado'),a(d1,'11:00','Carmen López','Corte','0983 456 789')],
+      loc3:[a(d0,'09:00','Pedro Martínez','Corte y barba','0984 567 890'),a(d0,'16:00','Laura Sánchez','Corte','0985 678 901','pendiente'),a(d1,'10:30','Carlos Ruiz','Barba','0986 789 012')],
+      loc4:[a(d0,'08:00','Diego Fernández','Corte','0987 890 123'),a(d0,'13:00','Elena García','Corte','0988 901 234'),a(d1,'09:00','Miguel Torres','Corte','0989 012 345')],
+      loc5:[a(d0,'11:00','Isabel Ramírez','Tinte','0990 123 456'),a(d0,'15:30','Rosa Morales','Corte','0991 234 567','cancelado'),a(d1,'14:00','Francisco Castro','Corte','0992 345 678')]},
+    wait:{loc1:[{id:nid(),client:'Diego Romero',phone:'0984 111 909',date:d0,win:'am',notified:false},
+      {id:nid(),client:'Carmen Ortiz',phone:'0981 902 765',date:'any',win:'any',notified:false}],
+      loc2:[{id:nid(),client:'José Pérez',phone:'0985 222 333',date:d0,win:'pm',notified:false}],
+      loc3:[{id:nid(),client:'Ana Silva',phone:'0986 333 444',date:'any',win:'any',notified:false}],
+      loc4:[{id:nid(),client:'Luis Benítez',phone:'0987 444 555',date:d1,win:'am',notified:false}],
+      loc5:[]},
+    log:[],recovered:0,cfg:{pay:true,amount:20000},
+    userLocation:null
+  };
+}
+let S;
+
+async function loadFromFirebase(){
+  await window.firebaseReady;
+  const docRef=window.firebaseDoc(window.firebaseDB, FIREBASE_COLLECTION, FIREBASE_DOC);
+  const docSnap=await window.firebaseGetDoc(docRef);
+  return docSnap.exists()?docSnap.data():null;
+}
+
+async function saveToFirebase(){
+  await window.firebaseReady;
+  const docRef=window.firebaseDoc(window.firebaseDB, FIREBASE_COLLECTION, FIREBASE_DOC);
+  await window.firebaseSetDoc(docRef, S);
+}
+
+async function initializeData(){
+  try{
+    S=await loadFromFirebase();
+  }catch(err){
+    console.warn('Firebase no listo o sin conexión, usando respaldo:',err);
+    S=null;
+  }
+  if(!S||!S.locales){
+    const local=localStorage.getItem('TS_DATA');
+    if(local){
+      try{S=JSON.parse(local);}catch(e){}
+    }
+    if(!S||!S.locales){
+      S=seed();
+    }
+    try{await saveToFirebase();}catch(e){}
+  }
+  if(!S.cfg)S.cfg={pay:true,amount:20000};
+  if(!S.selectedLocale)S.selectedLocale=S.locales[0].id;
+  if(!S.users)S.users={};
+  if(!S.currentUser)S.currentUser=null;
+}
+
+async function save(){
+  try{
+    localStorage.setItem('TS_DATA',JSON.stringify(S));
+    await saveToFirebase();
+  }catch(e){
+    console.warn('Error guardando en Firebase (guardado en local):',e);
+    toast('Guardado localmente');
+    return true;
+  }
+  return true;
+}
+
+let selDate=iso(DAYS[0]);let onlyFree=false;let view='home';
+
+function getAppts(){return S.appts[S.selectedLocale]||[];}
+function getWait(){return S.wait[S.selectedLocale]||[];}
+function getLocaleHours(date){
+  const locale=S.locales.find(l=>l.id===S.selectedLocale);
+  if(!locale||!locale.hours)return'09:00-18:00';
+  const dayName=new Date(date+'T12:00:00').toLocaleDateString('es-PY',{weekday:'long'}).toLowerCase();
+  const hours=locale.hours[dayName]||'09:00-18:00';
+  return hours;
+}
+function parseHours(hoursStr){
+  if(hoursStr==='cerrado'||!hoursStr)return null;
+  const match=hoursStr.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+  if(!match)return null;
+  return{start:parseInt(match[1])*60+parseInt(match[2]),end:parseInt(match[3])*60+parseInt(match[4])};
+}
+function isTimeInHours(time,hoursStr){
+  const hours=parseHours(hoursStr);
+  if(!hours)return false;
+  const[h,m]=time.split(':').map(Number);
+  const minutes=h*60+m;
+  return minutes>=hours.start&&minutes<hours.end;
+}
+function getAvailableHours(date){
+  const hoursStr=getLocaleHours(date);
+  const hours=parseHours(hoursStr);
+  if(!hours)return[];
+  return HOURS.filter(t=>isTimeInHours(t,hoursStr));
+}
+function slotState(date,time){
+  const hoursStr=getLocaleHours(date);
+  if(!isTimeInHours(time,hoursStr))return{k:'closed'};
+  const list=getAppts().filter(x=>x.date===date&&x.time===time);
+  const b=list.find(x=>x.status==='confirmado'||x.status==='pendiente');
+  if(b)return{k:b.status==='pendiente'?'pend':'book',a:b};
+  const c=list.filter(x=>x.status==='cancelado'||x.status==='ausente').pop();
+  if(c)return{k:'lib',a:c};
+  return{k:'free'};
+}
+function isPast(date,time){
+  if(date!==iso(today))return false;
+  const n=new Date();const[h,m]=time.split(':').map(Number);
+  return h*60+m<n.getHours()*60+n.getMinutes()-30&&false;
+}
+function candidates(date,time){
+  const h=+time.split(':')[0];
+  return getWait().filter(w=>(w.date==='any'||w.date===date)&&(w.win==='any'||(w.win==='am'&&h<13)||(w.win==='pm'&&h>=13)));
+}
+function countLib(date){
+  const availableHours=getAvailableHours(date);
+  return availableHours.filter(t=>slotState(date,t).k==='lib').length;
+}
+
+function render(){
+  if(view==='home')renderHome();
+  else if(view==='booking')renderBooking();
+  else if(view==='admin')renderAdmin();
+}
+
+function renderHome(){
+  document.getElementById('homeView').style.display='block';
+  document.getElementById('bookingView').style.display='none';
+  updateAuthUI();
+  const container=document.getElementById('localesContainer');
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  const filtered=S.locales.filter(l=>l.name.toLowerCase().includes(search)||l.address.toLowerCase().includes(search)||l.type.toLowerCase().includes(search));
+  container.innerHTML='';
+  filtered.forEach(l=>{
+    const appts=S.appts[l.id]||[];
+    const todayDate=iso(DAYS[0]);
+    const locale=S.locales.find(x=>x.id===l.id);
+    const dayName=new Date(todayDate+'T12:00:00').toLocaleDateString('es-PY',{weekday:'long'}).toLowerCase();
+    const hoursStr=locale.hours?locale.hours[dayName]||'09:00-18:00':'09:00-18:00';
+    const todaySlots=HOURS.filter(t=>isTimeInHours(t,hoursStr)).map(t=>slotState(todayDate,t));
+    const available=todaySlots.filter(s=>s.k==='free'||s.k==='lib').length;
+    const occupied=todaySlots.filter(s=>s.k==='book'||s.k==='pend').length;
+    const distance=S.userLocation?calcDistance(S.userLocation.lat,S.userLocation.lng,l.lat,l.lng).toFixed(1):null;
+    const isNearby=distance&&distance<5;
+    const card=document.createElement('div');
+    card.className='locale-card';
+    card.innerHTML='<div class="locale-header"><img src="'+esc(l.logo)+'" alt="" class="locale-logo"><div class="locale-info"><h3>'+esc(l.name)+'</h3><p class="locale-type">'+esc(l.type)+'</p></div>'+(isNearby?'<span class="tag ok">Cercano</span>':'')+'</div>'+
+    '<div class="locale-body"><div class="locale-address">Ubicación: '+esc(l.address)+'</div>'+
+    '<div class="locale-stats"><span class="stat-sm"><b>'+available+'</b><small>Disponibles hoy</small></span><span class="stat-sm"><b>'+occupied+'</b><small>Ocupados hoy</small></span>'+(distance?'<span class="stat-sm"><b>'+distance+' km</b><small>Distancia</small></span>':'')+'</div>'+
+    '<div class="locale-rating"><span class="stars">★★★★★</span> '+l.rating+' · '+hoursStr+'</div></div>'+
+    '<div class="locale-footer"><button class="btn" data-loc="'+l.id+'">Ver horarios y reservar</button></div>';
+    card.querySelector('button').onclick=async()=>{S.selectedLocale=l.id;selDate=iso(DAYS[0]);view='booking';await save();render();};
+    container.appendChild(card);
+  });
+  if(!filtered.length)container.innerHTML='<p class="empty">No se encontraron locales.</p>';
+}
+
+function updateAuthUI(){
+  const authButtons=document.getElementById('authButtons');
+  const userInfo=document.getElementById('userInfo');
+  const userName=document.getElementById('userName');
+  const adminBtn=document.getElementById('adminBtn');
+  if(S.currentUser){
+    authButtons.style.display='none';
+    userInfo.style.display='flex';
+    userName.textContent=S.currentUser.name;
+    if(S.currentUser.role==='owner'){
+      adminBtn.style.display='inline-block';
+    }else{
+      adminBtn.style.display='none';
+    }
+  }else{
+    authButtons.style.display='flex';
+    userInfo.style.display='none';
+  }
+  const firebaseStatus=document.getElementById('firebaseStatus');
+  firebaseStatus.textContent='Firebase';
+  firebaseStatus.style.background='var(--primary-light)';
+  firebaseStatus.style.color='var(--primary)';
+}
+
+function renderBooking(){
+  document.getElementById('homeView').style.display='none';
+  document.getElementById('bookingView').style.display='block';
+  document.getElementById('adminView').style.display='none';
+  const locale=S.locales.find(l=>l.id===S.selectedLocale);
+  document.getElementById('backHome').textContent='← Volver a locales';
+  // stats
+  const libTotal=DAYS.reduce((n,d)=>n+countLib(iso(d)),0);
+  document.getElementById('stats').innerHTML=
+    '<div class="stat hot"><b>'+libTotal+'</b><span>horarios liberados</span></div>'+
+    '<div class="stat"><b>'+S.recovered+'</b><span>turnos recuperados</span></div><div class="stat"><b>'+fmtN(getAppts().reduce((n,x)=>n+(x.paid||0),0))+'</b><span>Gs. en señas cobradas</span></div>';
+  // week
+  const w=document.getElementById('week');w.innerHTML='';
+  DAYS.forEach(d=>{
+    const k=iso(d),b=document.createElement('button');
+    b.className='day';b.type='button';b.setAttribute('aria-pressed',k===selDate);
+    b.innerHTML=(countLib(k)?'<i title="Hay horarios liberados"></i>':'')+'<small>'+d.toLocaleDateString('es-PY',{weekday:'short'})+'</small><b>'+d.getDate()+'</b>';
+    b.onclick=()=>{selDate=k;render()};
+    w.appendChild(b);
+  });
+  // day
+  const availableHours=getAvailableHours(selDate);
+  const st=availableHours.map(t=>slotState(selDate,t));
+  const nb=st.filter(x=>x.k==='book'||x.k==='pend').length,nl=st.filter(x=>x.k==='lib').length,nf=st.filter(x=>x.k==='free').length;
+  document.getElementById('dayTitle').textContent=fmtLong(selDate);
+  const hoursStr=getLocaleHours(selDate);
+  document.getElementById('daySum').textContent=hoursStr==='cerrado'?'Cerrado este día':(nl+nf)+' disponibles y '+nb+' ocupados';
+  const sl=document.getElementById('slots');sl.innerHTML='';
+  if(hoursStr==='cerrado'){
+    sl.innerHTML='<p class="empty">El local está cerrado este día.</p>';
+  }else{
+    availableHours.forEach((t,i)=>{
+      const s=st[i];if(onlyFree&&(s.k==='book'||s.k==='pend'))return;const row=document.createElement('div');row.className='slot';
+      let inner;
+      if(s.k==='book'||s.k==='pend')inner='<span><b>'+esc(s.a.client)+'</b><br><small>'+esc(s.a.service)+(s.k==='pend'?' (falta pagar la seña)':s.a.paid?' (seña pagada)':'')+'</small></span><span class="tag">'+(s.k==='pend'?'Ocupado, pago pendiente':'Ocupado')+'</span>';
+      else if(s.k==='lib'){const n=candidates(selDate,t).length;inner='<span>Horario liberado<br><small>'+(s.a.status==='ausente'?'Ausencia':'Cancelado')+': '+esc(s.a.client)+'</small></span><span class="tag ok">Disponible'+(n?', '+n+(n===1?' interesado':' interesados'):'')+'</span>'}
+      else inner='<span>Libre</span><span class="tag ok">Disponible</span>';
+      row.innerHTML='<time>'+t+'</time><button type="button" class="cell '+s.k+'">'+inner+'</button>';
+      row.querySelector('button').onclick=()=>openSlot(selDate,t);
+      sl.appendChild(row);
+    });
+  }
+  if(!sl.children.length)sl.innerHTML='<p class="empty">No quedan horarios disponibles este día. Probá con otro día o anotá al cliente en la lista de espera.</p>';
+  document.getElementById('fAll').setAttribute('aria-pressed',!onlyFree);document.getElementById('fFree').setAttribute('aria-pressed',onlyFree);
+  document.getElementById('cfgPay').checked=S.cfg.pay;document.getElementById('cfgAmt').value=S.cfg.amount;document.getElementById('cfgAmt').disabled=!S.cfg.pay;
+  // wait list
+  const wl=document.getElementById('wList');
+  const waitList=getWait();
+  wl.innerHTML=waitList.length?'':'<p class="empty">Nadie en espera. Anotá a quien quiera un horario si se libera.</p>';
+  waitList.forEach(x=>{
+    const li=document.createElement('li');
+    const win={any:'cualquier hora',am:'mañana',pm:'tarde'}[x.win];
+    li.innerHTML='<div class="row"><b>'+esc(x.client)+'</b><button class="btn ghost sm" type="button" aria-label="Quitar a '+esc(x.client)+'">Quitar</button></div><span class="muted">'+(x.date==='any'?'Cualquier día':fmtShort(x.date))+', '+win+(x.notified?' (avisado)':'')+'</span>';
+    li.querySelector('button').onclick=async()=>{S.wait[S.selectedLocale]=getWait().filter(y=>y.id!==x.id);await save();render()};
+    wl.appendChild(li);
+  });
+  // log
+  const lg=document.getElementById('logList');
+  lg.innerHTML=S.log.length?'':'<p class="empty">Todavía no avisaste a nadie.</p>';
+  S.log.slice().reverse().slice(0,8).forEach(l=>{
+    const li=document.createElement('li');
+    li.innerHTML='<span class="muted">'+esc(l.when)+' para '+esc(l.to)+' ('+esc(l.phone)+')</span><div class="msg">'+esc(l.text)+'</div>';
+    lg.appendChild(li);
+  });
+}
+
+function calcDistance(lat1,lng1,lat2,lng2){
+  const R=6371;
+  const dLat=(lat2-lat1)*Math.PI/180;
+  const dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c;
+}
+
+function renderAdmin(){
+  document.getElementById('homeView').style.display='none';
+  document.getElementById('bookingView').style.display='none';
+  document.getElementById('adminView').style.display='block';
+  if(!S.currentUser||S.currentUser.role!=='owner'){
+    view='home';
+    render();
+    toast('Acceso no autorizado');
+    return;
+  }
+  const container=document.getElementById('adminLocales');
+  const myLocales=S.locales.filter(l=>l.owner===S.currentUser.email);
+  container.innerHTML='';
+  myLocales.forEach(l=>{
+    const card=document.createElement('div');
+    card.className='locale-card';
+    card.innerHTML='<div class="locale-header"><img src="'+esc(l.logo)+'" alt="" class="locale-logo"><div class="locale-info"><h3>'+esc(l.name)+'</h3><p class="locale-type">'+esc(l.type)+'</p></div></div>'+
+    '<div class="locale-body"><div class="locale-address">'+esc(l.address)+'</div>'+
+    '<div class="locale-rating">Horario: '+l.hours+'</div></div>'+
+    '<div class="locale-footer"><button class="btn" data-edit="'+l.id+'">Editar</button><button class="btn warn" data-delete="'+l.id+'">Eliminar</button></div>';
+    card.querySelector('[data-edit]').onclick=()=>editLocale(l.id);
+    card.querySelector('[data-delete]').onclick=()=>deleteLocale(l.id);
+    container.appendChild(card);
+  });
+  if(!myLocales.length)container.innerHTML='<p class="empty">No tienes locales registrados. Agrega tu primer local.</p>';
+  document.getElementById('cfgPay').checked=S.cfg.pay;
+  document.getElementById('cfgAmt').value=S.cfg.amount;
+  document.getElementById('cfgAmt').disabled=!S.cfg.pay;
+}
+
+async function editLocale(id){
+  const l=S.locales.find(x=>x.id===id);
+  if(!l)return;
+  const days=['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+  const hours=l.hours||{};
+  dlg.innerHTML='<h3>Editar Local</h3>'+
+  '<form class="stack" id="localeForm"><label>Nombre<input name="name" required value="'+esc(l.name)+'"></label>'+
+  '<label>Tipo<select name="type"><option value="Barbería"'+(l.type==='Barbería'?' selected':'')+'>Barbería</option><option value="Salón de belleza"'+(l.type==='Salón de belleza'?' selected':'')+'>Salón de belleza</option><option value="Peluquería"'+(l.type==='Peluquería'?' selected':'')+'>Peluquería</option><option value="Estudio"'+(l.type==='Estudio'?' selected':'')+'>Estudio</option></select></label>'+
+  '<label>Dirección<input name="address" required value="'+esc(l.address)+'"></label>'+
+  '<div class="sep"></div><h4>Horarios por día</h4>'+
+  days.map(d=>'<label>'+d.charAt(0).toUpperCase()+d.slice(1)+'<input name="hour_'+d+'" value="'+esc(hours[d]||'09:00-18:00')+'" placeholder="09:00-18:00 o cerrado"></label>').join('')+
+  '<div class="sep"></div>'+
+  '<label>URL del logo<input name="logo" value="'+esc(l.logo)+'" placeholder="https://ejemplo.com/logo.png"></label>'+
+  '<label>Latitud<input name="lat" type="number" step="any" value="'+l.lat+'"></label>'+
+  '<label>Longitud<input name="lng" type="number" step="any" value="'+l.lng+'"></label>'+
+  '<div class="actions"><button class="btn" type="submit">Guardar cambios</button><button class="btn ghost" type="button" data-close>Cancelar</button></div></form>';
+  if(!dlg.open)dlg.showModal();
+  dlg.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+  dlg.querySelector('#localeForm').onsubmit=async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target);
+    const newHours={};
+    days.forEach(d=>newHours[d]=f.get('hour_'+d).trim()||'cerrado');
+    Object.assign(l,{name:f.get('name').trim(),type:f.get('type'),address:f.get('address').trim(),hours:newHours,logo:f.get('logo').trim(),lat:parseFloat(f.get('lat')),lng:parseFloat(f.get('lng'))});
+    await save();
+    dlg.close();
+    render();
+    toast('Local actualizado');
+  };
+}
+
+async function deleteLocale(id){
+  if(!confirm('¿Estás seguro de eliminar este local? Esta acción no se puede deshacer.'))return;
+  S.locales=S.locales.filter(l=>l.id!==id);
+  delete S.appts[id];
+  delete S.wait[id];
+  await save();
+  render();
+  toast('Local eliminado');
+}
+
+document.getElementById('addLocaleBtn').onclick=()=>{
+  const days=['lunes','martes','miercoles','jueves','viernes','sabado','domingo'];
+  dlg.innerHTML='<h3>Agregar Nuevo Local</h3>'+
+  '<form class="stack" id="localeForm"><label>Nombre<input name="name" required placeholder="Nombre de tu negocio"></label>'+
+  '<label>Tipo<select name="type"><option value="Barbería">Barbería</option><option value="Salón de belleza">Salón de belleza</option><option value="Peluquería">Peluquería</option><option value="Estudio">Estudio</option></select></label>'+
+  '<label>Dirección<input name="address" required placeholder="Dirección completa"></label>'+
+  '<div class="sep"></div><h4>Horarios por día</h4>'+
+  days.map(d=>'<label>'+d.charAt(0).toUpperCase()+d.slice(1)+'<input name="hour_'+d+'" value="09:00-18:00" placeholder="09:00-18:00 o cerrado"></label>').join('')+
+  '<div class="sep"></div>'+
+  '<label>URL del logo<input name="logo" placeholder="https://ejemplo.com/logo.png"></label>'+
+  '<label>Latitud<input name="lat" type="number" step="any" placeholder="-25.284"></label>'+
+  '<label>Longitud<input name="lng" type="number" step="any" placeholder="-57.642"></label>'+
+  '<div class="actions"><button class="btn" type="submit">Crear local</button><button class="btn ghost" type="button" data-close>Cancelar</button></div></form>';
+  if(!dlg.open)dlg.showModal();
+  dlg.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+  dlg.querySelector('#localeForm').onsubmit=async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target);
+    const newHours={};
+    days.forEach(d=>newHours[d]=f.get('hour_'+d).trim()||'cerrado');
+    const newId='loc'+Date.now();
+    S.locales.push({id:newId,name:f.get('name').trim(),type:f.get('type'),address:f.get('address').trim(),hours:newHours,logo:f.get('logo').trim()||'https://via.placeholder.com/80x80/2B6CB0/FFFFFF?text='+f.get('name').trim().substring(0,2).toUpperCase(),lat:parseFloat(f.get('lat'))||-25.284,lng:parseFloat(f.get('lng'))||-57.642,rating:5,owner:S.currentUser.email});
+    S.appts[newId]=[];
+    S.wait[newId]=[];
+    await save();
+    dlg.close();
+    render();
+    toast('Local creado exitosamente');
+  };
+};
+
+document.getElementById('backHomeFromAdmin').onclick=()=>{view='home';render();};
+
+// select de día en lista de espera
+(function(){const s=document.getElementById('wDate');
+  s.innerHTML='<option value="any">Cualquier día</option>'+DAYS.map(d=>'<option value="'+iso(d)+'">'+esc(fmtLong(iso(d)))+'</option>').join('')})();
+document.getElementById('wForm').addEventListener('submit',async e=>{
+  e.preventDefault();const f=new FormData(e.target);
+  if(!S.wait[S.selectedLocale])S.wait[S.selectedLocale]=[];
+  S.wait[S.selectedLocale].push({id:nid(),client:f.get('client').trim(),phone:f.get('phone').trim(),date:f.get('date'),win:f.get('win'),notified:false});
+  await save();e.target.reset();render();toast('Anotado en la lista de espera');
+});
+document.getElementById('reset').onclick=async()=>{S=seed();await save();selDate=iso(DAYS[0]);view='home';render();toast('Datos de prueba reiniciados')};
+document.getElementById('backHome').onclick=()=>{view='home';render();};
+document.getElementById('searchInput').addEventListener('input',()=>{if(view==='home')render();});
+document.getElementById('geoBtn').onclick=()=>{
+  if(navigator.geolocation){
+    document.getElementById('geoBtn').textContent='Buscando...';
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      S.userLocation={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      await save();
+      document.getElementById('geoBtn').textContent='Ubicación encontrada';
+      render();
+      toast('Ubicación encontrada');
+    },err=>{
+      document.getElementById('geoBtn').textContent='Usar mi ubicación';
+      toast('No se pudo obtener la ubicación');
+    });
+  }else{
+    toast('Geolocalización no soportada');
+  }
+};
+document.getElementById('loginBtn').onclick=()=>openAuthDialog('login');
+document.getElementById('registerBtn').onclick=()=>openAuthDialog('register');
+document.getElementById('logoutBtn').onclick=async()=>{
+  S.currentUser=null;
+  await save();
+  render();
+  toast('Sesión cerrada');
+};
+document.getElementById('adminBtn').onclick=()=>{view='admin';render();};
+function openAuthDialog(type){
+  const isLogin=type==='login';
+  dlg.innerHTML='<h3>'+(isLogin?'Iniciar sesión':'Registrarse')+'</h3>'+
+  '<form class="stack" id="authForm"><label>Nombre<input name="name" required maxlength="40" placeholder="Tu nombre"></label>'+
+  '<label>Email<input name="email" type="email" required maxlength="80" placeholder="tu@email.com"></label>'+
+  '<label>Contraseña<input name="password" type="password" required minlength="6" maxlength="40" placeholder="Minimo 6 caracteres"></label>'+
+  (!isLogin?'<label>Tipo de cuenta<select name="role"><option value="client">Cliente</option><option value="owner">Dueño de negocio</option></select></label>':'')+
+  '<div class="actions"><button class="btn" type="submit">'+(isLogin?'Iniciar sesión':'Registrarse')+'</button><button class="btn ghost" type="button" data-close>Cancelar</button></div></form>';
+  if(!dlg.open)dlg.showModal();
+  dlg.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+  dlg.querySelector('#authForm').onsubmit=async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target);
+    const email=f.get('email').trim().toLowerCase();
+    const password=f.get('password');
+    if(isLogin){
+      const user=S.users[email];
+      if(user&&user.password===password){
+        S.currentUser={email,name:user.name,role:user.role};
+        await save();
+        dlg.close();
+        render();
+        toast('Bienvenido, '+user.name);
+      }else{
+        toast('Email o contraseña incorrectos');
+      }
+    }else{
+      if(S.users[email]){
+        toast('Este email ya está registrado');
+        return;
+      }
+      S.users[email]={name:f.get('name').trim(),email,password,role:f.get('role')};
+      S.currentUser={email,name:S.users[email].name,role:S.users[email].role};
+      await save();
+      dlg.close();
+      render();
+      toast('Registro exitoso');
+    }
+  };
+}
+
+// diálogo
+const dlg=document.getElementById('dlg');
+function bookForm(date,time,pre){
+  const p=S.cfg.pay;
+  return '<form class="stack" id="bForm"><label>Cliente<input name="client" required maxlength="40" value="'+esc(pre?pre.client:'')+'"></label>'+
+  '<label>Servicio<input name="service" required maxlength="40" value="Corte" list="svc"></label><datalist id="svc"><option>Corte</option><option>Barba</option><option>Corte y barba</option><option>Clase</option><option>Visita técnica</option></datalist>'+
+  '<label>Teléfono<input name="phone" required maxlength="20" inputmode="tel" value="'+esc(pre?pre.phone:'')+'"></label>'+
+  (p?'<div class="payopt"><label class="chk"><input type="radio" name="pay" value="now" checked> Pagar seña de '+fmtGs(S.cfg.amount)+' para confirmar</label><label class="chk"><input type="radio" name="pay" value="later"> Reservar y pagar después (queda pendiente)</label></div>':'')+
+  '<div class="actions"><button class="btn" type="submit">'+(p?'Continuar':'Reservar turno')+'</button><button class="btn ghost" type="button" data-close>Cerrar</button></div></form>';
+}
+function bookFormOld(date,time,pre){
+  return '<form class="stack" id="bForm"><label>Cliente<input name="client" required maxlength="40" value="'+esc(pre?pre.client:'')+'"></label>'+
+  '<label>Servicio<input name="service" required maxlength="40" value="Corte" list="svc"></label><datalist id="svc"><option>Corte</option><option>Barba</option><option>Corte y barba</option><option>Clase</option><option>Visita técnica</option></datalist>'+
+  '<label>Teléfono<input name="phone" required maxlength="20" inputmode="tel" value="'+esc(pre?pre.phone:'')+'"></label>'+
+  '<div class="actions"><button class="btn" type="submit">Reservar turno</button><button class="btn ghost" type="button" data-close>Cerrar</button></div></form>';
+}
+function openSlot(date,time){
+  const s=slotState(date,time);
+  let h='<h3>'+esc(fmtLong(date))+', '+time+'</h3>';
+  if(s.k==='free'){
+    h+='<p class="muted">Horario libre. Cargá los datos del cliente.</p>'+bookForm(date,time);
+  }else if(s.k==='book'||s.k==='pend'){
+    h+='<p><b>'+esc(s.a.client)+'</b><br>'+esc(s.a.service)+'<br><span class="muted">'+esc(s.a.phone)+'</span></p><p>'+(s.k==='pend'?'<span class="tag">Falta pagar la seña de '+fmtGs(S.cfg.amount)+'</span>':'<span class="tag ok">'+(s.a.paid?'Seña pagada '+fmtGs(s.a.paid)+', ref. '+esc(s.a.ref):'Confirmado, sin pago online')+'</span>')+'</p>'+
+    '<div class="actions">'+(s.k==='pend'?'<button class="btn" data-pay>Pagar seña ahora</button>':'')+'<button class="btn warn" data-act="cancel">Cancelar turno</button><button class="btn warn" data-act="absent">Marcar ausencia</button><button class="btn ghost" data-close>Cerrar</button></div>';
+  }else{
+    const c=candidates(date,time);
+    h+='<p class="muted">Horario liberado ('+(s.a.status==='ausente'?'ausencia':'cancelación')+' de '+esc(s.a.client)+'). Elegí a quién avisar o asignale el turno.</p>';
+    if(c.length){
+      h+='<ul class="list">'+c.map(w=>'<li><div class="row"><b>'+esc(w.client)+'</b><span class="muted">'+(w.notified?'ya avisado':esc(w.phone))+'</span></div>'+
+      '<div class="actions" style="margin:0"><button class="btn sm ghost" data-notify="'+w.id+'">'+(w.notified?'Avisar de nuevo':'Avisar')+'</button><button class="btn sm" data-assign="'+w.id+'">Asignar turno</button></div></li>').join('')+'</ul>';
+    }else h+='<p class="empty">Nadie en la lista de espera encaja con este horario.</p>';
+    h+='<div class="sep"></div><details><summary>Reservar a otra persona</summary><div style="margin-top:10px">'+bookForm(date,time)+'</div></details>'+
+    '<div class="actions"><button class="btn ghost" data-close>Cerrar</button></div>';
+  }
+  dlg.innerHTML=h;
+  if(!dlg.open)dlg.showModal();
+  dlg.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>dlg.close());
+  const bf=dlg.querySelector('#bForm');
+  if(bf)bf.onsubmit=async e=>{e.preventDefault();const f=new FormData(bf);
+    const p=S.cfg.pay,now=p&&f.get('pay')==='now';
+    if(!S.appts[S.selectedLocale])S.appts[S.selectedLocale]=[];
+    S.appts[S.selectedLocale].push({id:nid(),date,time,client:f.get('client').trim(),service:f.get('service').trim(),phone:f.get('phone').trim(),status:p?'pendiente':'confirmado'});
+    await save();render();
+    if(now)openPay(date,time);else{dlg.close();toast(p?'Reserva retenida: falta pagar la seña':'Turno reservado')}};
+  dlg.querySelectorAll('[data-act]').forEach(b=>b.onclick=async()=>{
+    s.a.status=b.dataset.act==='cancel'?'cancelado':'ausente';await save();render();
+    toast('Horario liberado');openSlot(date,time);});
+  dlg.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>openPay(date,time));
+  dlg.querySelectorAll('[data-notify]').forEach(b=>b.onclick=async()=>{
+    const w=getWait().find(x=>x.id===b.dataset.notify);if(!w)return;
+    const text='Hola '+w.client+', se liberó un turno el '+fmtLong(date)+' a las '+time+'. Respondé a este mensaje para confirmarlo.';
+    w.notified=true;
+    S.log.push({when:fmtShort(date)+' '+time,to:w.client,phone:w.phone,text});
+    await save();render();toast('Aviso simulado enviado a '+w.client);openSlot(date,time);});
+  dlg.querySelectorAll('[data-assign]').forEach(b=>b.onclick=async()=>{
+    const w=getWait().find(x=>x.id===b.dataset.assign);if(!w)return;
+    if(!S.appts[S.selectedLocale])S.appts[S.selectedLocale]=[];
+    S.appts[S.selectedLocale].push({id:nid(),date,time,client:w.client,service:'Turno reasignado',phone:w.phone,status:S.cfg.pay?'pendiente':'confirmado'});
+    S.wait[S.selectedLocale]=getWait().filter(x=>x.id!==w.id);S.recovered++;await save();dlg.close();render();
+    toast('Turno asignado a '+w.client);if(S.cfg.pay)openSlot(date,time);});
+}
+function openPay(date,time){
+  const s=slotState(date,time),a=s.a,amt=S.cfg.amount;
+  dlg.innerHTML='<h3>Pagar seña</h3><p class="muted">'+esc(a.client)+', '+esc(fmtLong(date))+' a las '+time+'</p><div class="gw"><b>'+fmtGs(amt)+'</b><span class="tag">Modo de prueba</span></div><form class="stack" id="pForm" novalidate><label>Medio de pago<select id="pm"><option value="card">Tarjeta</option><option value="qr">Transferencia o QR</option></select></label><div id="cardBox" class="stack"><label>Número de tarjeta<input id="pn" inputmode="numeric" maxlength="19" placeholder="4242 4242 4242 4242" autocomplete="off"></label><div class="two"><label>Vence<input id="pe" maxlength="5" placeholder="MM/AA" autocomplete="off"></label><label>CVC<input id="pc" maxlength="4" inputmode="numeric" autocomplete="off"></label></div><p class="muted">Probá con 4242 4242 4242 4242 (aprobada) o 4000 0000 0000 0002 (rechazada).</p></div><div id="qrBox" hidden><div class="qr" role="img" aria-label="Código QR de ejemplo"></div><p class="muted">Escaneá el código desde tu billetera. En la demo se aprueba al tocar el botón.</p></div><p class="err" id="perr" role="alert"></p><div class="actions"><button class="btn" type="submit" id="pbtn">Pagar '+fmtGs(amt)+'</button><button class="btn ghost" type="button" id="later">Pagar después</button></div></form>';
+  if(!dlg.open)dlg.showModal();
+  const $=id=>dlg.querySelector('#'+id);
+  $('pm').onchange=e=>{const q=e.target.value==='qr';$('cardBox').hidden=q;$('qrBox').hidden=!q};
+  $('pn').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim()};
+  $('later').onclick=()=>{dlg.close();toast('Reserva retenida: falta pagar la seña')};
+  $('pForm').onsubmit=async e=>{e.preventDefault();
+    const qr=$('pm').value==='qr',d=$('pn').value.replace(/\D/g,'');
+    if(!qr&&(d.length!==16||!/^\d\d\/\d\d$/.test($('pe').value)||$('pc').value.length<3)){$('perr').textContent='Revisá los datos de la tarjeta: 16 dígitos, vencimiento MM/AA y CVC.';return}
+    $('perr').textContent='';const b=$('pbtn');b.disabled=true;b.textContent='Procesando…';
+    setTimeout(async()=>{
+      if(!qr&&d==='4000000000000002'){b.disabled=false;b.textContent='Pagar '+fmtGs(amt);$('perr').textContent='El banco rechazó el pago. Probá con otra tarjeta.';return}
+      a.status='confirmado';a.paid=amt;a.method=qr?'Transferencia o QR':'Tarjeta';a.ref='TS-'+Math.random().toString(36).slice(2,8).toUpperCase();
+      await save();render();
+      dlg.innerHTML='<h3>Pago aprobado</h3><p>Turno confirmado para <b>'+esc(a.client)+'</b>, '+esc(fmtLong(date))+' a las '+time+'.</p><div class="gw"><b>'+fmtGs(amt)+'</b><span class="tag ok">Pagado</span></div><p class="muted">Referencia '+a.ref+', '+a.method+'. Pasarela simulada, sin cargo real.</p><div class="actions"><button class="btn" data-close>Listo</button></div>';
+      dlg.querySelector('[data-close]').onclick=()=>dlg.close();
+    },1200);
+  };
+}
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
+
+document.getElementById('cfgPay').onchange=async e=>{S.cfg.pay=e.target.checked;await save();render()};
+document.getElementById('cfgAmt').onchange=async e=>{S.cfg.amount=Math.max(1000,parseInt(e.target.value)||0);await save();render()};
+document.getElementById('fAll').onclick=()=>{onlyFree=false;render()};
+document.getElementById('fFree').onclick=()=>{onlyFree=true;render()};
+let tt;function toast(m){
+  const old=document.querySelector('.toast');if(old)old.remove();
+  const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=m;document.body.appendChild(t);
+  clearTimeout(tt);tt=setTimeout(()=>t.remove(),2600);
+}
+
+async function init(){
+  try{
+    await initializeData();
+    view='home';
+    render();
+  }catch(e){
+    console.error('No se pudo iniciar con Firebase, cargando local:',e);
+    S=seed();
+    view='home';
+    render();
+    const st=document.getElementById('firebaseStatus');
+    if(st){
+      st.textContent='Modo local';
+      st.style.color='var(--sigtxt)';
+      st.style.background='var(--sig)';
+    }
+  }
+}
+}
+
+init();
+})();
+</script>
+</body>
+</html>
