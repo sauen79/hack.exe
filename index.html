@@ -221,7 +221,7 @@ header p {
   font-size: 0.9rem;
 }
 
-.firebase-status { display: flex; align-items: center; gap: 8px; }
+.firebase-status, #firebaseStatus { display: none !important; }
 #firebaseStatus {
   display: inline-flex;
   align-items: center;
@@ -754,7 +754,7 @@ details summary { cursor: pointer; font-weight: 700; color: #A5B4FC; }
         <button class="btn ghost sm" id="logoutBtn">Cerrar sesión</button>
         <button class="btn ghost sm" id="adminBtn" style="display:none">Panel de dueño</button>
       </div>
-      <div class="firebase-status"><span id="firebaseStatus" class="muted">Firebase</span></div>
+      
     </div>
     <div class="search-section">
       <input type="text" id="searchInput" placeholder="Buscar locales por nombre, dirección o tipo..." class="search-input">
@@ -824,7 +824,7 @@ details summary { cursor: pointer; font-weight: 700; color: #A5B4FC; }
     </aside>
   </div>
 </div>
-<p class="foot">Plan mensual para profesionales independientes. Los datos se guardan en Firebase.</p>
+<p class="foot">Plan mensual para profesionales independientes. Sincronización en la nube en tiempo real.</p>
 </div>
 
 <dialog id="dlg"></dialog>
@@ -1042,9 +1042,9 @@ function updateAuthUI(){
     userInfo.style.display='none';
   }
   const firebaseStatus=document.getElementById('firebaseStatus');
-  firebaseStatus.textContent='Firebase';
-  firebaseStatus.style.background='var(--primary-light)';
-  firebaseStatus.style.color='var(--primary)';
+  if(firebaseStatus){
+    firebaseStatus.style.display='none';
+  }
 }
 
 function renderBooking(){
